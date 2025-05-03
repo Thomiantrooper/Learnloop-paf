@@ -9,6 +9,7 @@ import CommentSection from "../components/CommentSection";
 import { motion } from "framer-motion";
 import PostForm from "../components/PostForm";
 import { connectWebSocket, disconnectWebSocket } from "../services/WebSocketService";
+import NotificationBell from "../components/NotificationBell";
 
 const DashboardPage = () => {
   const navigate = useNavigate();
@@ -44,16 +45,28 @@ const DashboardPage = () => {
   }, [loggedInUserId]);
 
   const handlePostCreated = (newPost) => {
-    setShowPostForm(false);
-    fetchPosts();
+    setPosts([newPost, ...posts]);
   };
 
   const handleLike = async (postId) => {
+    const updatedPosts = posts.map((p) => {
+      if (p.id === postId) {
+        const alreadyLiked = p.likes.includes(loggedInUserId);
+        const newLikes = alreadyLiked
+          ? p.likes.filter((id) => id !== loggedInUserId)
+          : [...p.likes, loggedInUserId];
+        return { ...p, likes: newLikes };
+      }
+      return p;
+    });
+
+    setPosts(updatedPosts);
+
     try {
       await axios.post(`http://localhost:8080/api/posts/${postId}/like`, { userId: loggedInUserId });
-      fetchPosts();
     } catch (err) {
-      console.error("Error liking post:", err);
+      console.error("Failed to like post:", err);
+      fetchPosts(); // fallback
     }
   };
 
@@ -91,11 +104,11 @@ const DashboardPage = () => {
         <header className="flex justify-between items-center mb-8">
           <button
             onClick={() => setShowPostForm(true)}
-            className="w-12 h-12 Bg-blue-600 text-white rounded-full flex items-center justify-center text-2xl hover:bg-blue-700"
+            className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center text-2xl hover:bg-blue-700"
           >
             +
           </button>
-          
+          <NotificationBell userId={loggedInUserId} />
         </header>
 
         {showPostForm && <PostForm userId={loggedInUserId} onPostCreated={handlePostCreated} />}

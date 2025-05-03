@@ -30,6 +30,9 @@ public class User {
     private List<String> followers = new ArrayList<>();
     private List<String> following = new ArrayList<>();
     private List<String> posts = new ArrayList<>();
+    private List<String> likes = new ArrayList<>();
+    private List<String> comments = new ArrayList<>();
+
 
     // Getters and Setters
     public String getId() {
