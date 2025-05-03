@@ -20,4 +20,5 @@ public class LikeDTO {
     public void setUserName(String userName) { this.userName = userName; }
     public LocalDateTime getLikedAt() { return likedAt; }
     public void setLikedAt(LocalDateTime likedAt) { this.likedAt = likedAt; }
+    
 }

@@ -1,14 +1,15 @@
 package com.learnloop.backend.service;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.MediaType;
-import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vladsch.flexmark.html.HtmlRenderer;
-import com.vladsch.flexmark.parser.Parser;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 @Service
 public class GeminiService {
@@ -16,59 +17,56 @@ public class GeminiService {
     @Value("${gemini.api.key}")
     private String geminiApiKey;
 
-    private final WebClient webClient;
-
-    public GeminiService() {
-        this.webClient = WebClient.builder()
-                .baseUrl("https://generativelanguage.googleapis.com")
-                .build();
-    }
-
-    public String getAIInsight(String prompt) {
+    public String getAIInsight(String promptText) {
         try {
-            if (prompt == null || prompt.trim().isEmpty() || prompt.matches("^[a-fA-F0-9]{24}$")) {
-                return "⚠️ Cannot generate AI insight for empty input or ID only.";
-            }
-
-            String fullPrompt = """
-                I am a student who recently completed or learned the following:
-                
-                %s
-                
-                Please give me a motivational and career-focused summary in 5 bullet points.
-                """.formatted(prompt);
-
-            String body = """
+            String urlStr = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + geminiApiKey;
+            URL url = new URL(urlStr);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+            connection.setDoOutput(true);
+    
+            // FIXED JSON structure
+            String jsonPayload = String.format("""
             {
-              "contents": [{
-                "parts": [{
-                  "text": "%s"
-                }]
-              }]
+              "contents": [
+                {
+                  "role": "user",
+                  "parts": [
+                    { "text": "%s" }
+                  ]
+                }
+              ]
             }
-            """.formatted(fullPrompt.replace("\"", "\\\""));
-
-            String apiResponse = webClient.post()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("/v1beta/models/gemini-1.5-flash:generateContent")
-                            .queryParam("key", geminiApiKey)
-                            .build())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(body)
-                    .retrieve()
-                    .bodyToMono(String.class)
-                    .block();
-
-            String markdownInsight = extractInsightFromGeminiResponse(apiResponse);
-            String htmlInsight = convertMarkdownToHtml(markdownInsight);
-
-            return htmlInsight; // <--- return cleaned HTML version
-
+            """, promptText.replace("\"", "\\\"")); // escape double quotes
+    
+            try (OutputStream os = connection.getOutputStream()) {
+                byte[] input = jsonPayload.getBytes("utf-8");
+                os.write(input, 0, input.length);
+            }
+    
+            // Read response
+            BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"));
+            StringBuilder responseBuilder = new StringBuilder();
+            String responseLine;
+            while ((responseLine = br.readLine()) != null) {
+                responseBuilder.append(responseLine.trim());
+            }
+    
+            // Parse Gemini JSON output
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(responseBuilder.toString());
+            return root.path("candidates").get(0)
+                       .path("content")
+                       .path("parts").get(0)
+                       .path("text").asText("⚠️ Gemini returned no text.");
+    
         } catch (Exception e) {
             e.printStackTrace();
             return "❌ Error calling Gemini API: " + e.getMessage();
         }
     }
+    
 
     private String extractInsightFromGeminiResponse(String jsonResponse) {
         try {
@@ -88,11 +86,5 @@ public class GeminiService {
             e.printStackTrace();
             return "❌ Failed to parse Gemini response.";
         }
-    }
-
-    private String convertMarkdownToHtml(String markdown) {
-        Parser parser = Parser.builder().build();
-        HtmlRenderer renderer = HtmlRenderer.builder().build();
-        return renderer.render(parser.parse(markdown));
     }
 }
