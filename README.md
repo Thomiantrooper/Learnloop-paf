@@ -78,7 +78,7 @@ The platform is built using **React** for the frontend, **Spring Boot** for the 
 - **Learning Plans**: Create, share, and track progress on learning plans with topics and resources.
 
 ## **License** 📝
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+This project is developed for academic purposes and is subject to the guidelines of the Sri Lanka Institute of Information Technology (SLIIT) coursework.
 
 ## **Acknowledgments** 🎉
 - **Kanzurrizk M R A** (IT22166524) – Contributed on **OAuth authentication** and **AI Insight**.
