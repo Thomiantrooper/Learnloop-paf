@@ -1,6 +1,5 @@
-# **LearnLoop: Skill-Sharing & Learning Platform** 🚀
 
-![LearnLoop Logo](https://example.com/learnloop-logo.png)  <!-- You can add your own logo or leave it out -->
+# **LearnLoop: Skill-Sharing & Learning Platform** 
 
 ## **Overview** 📖
 
@@ -22,7 +21,7 @@ The platform is built using **React** for the frontend, **Spring Boot** for the 
 
 - **Frontend**: Built with **React.js**, styled using **Tailwind CSS**, and integrated with **Axios** for API communication.
 - **Backend**: Powered by **Spring Boot** for developing secure and scalable REST APIs.
-- **Database**: **MongoDB** for managing dynamic and user-generated content.
+- **Database**: **MongoDB** for managing dynamic and user-generated content & **Superbase** for storing posts.
 - **Authentication**: **OAuth 2.0** (e.g., Google) for easy and secure login.
 - **Version Control**: Managed via **GitHub** for seamless collaboration.
 
@@ -82,10 +81,10 @@ The platform is built using **React** for the frontend, **Spring Boot** for the 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
 
 ## **Acknowledgments** 🎉
-- **Kanzurrizk M R A** (IT22166524) – Lead Developer, focusing on **OAuth authentication** and **AI Insight**.
-- **Kajanthan K** (IT22197214) – Developer, working on **REST API for skill-sharing** and **post feed**.
-- **Peiris M D T N** (IT22109408) – Developer, focusing on **plan-sharing** and **frontend development**.
-- **Ashwin V** (IT22204448) – Developer, contributing to **user profile** and **progress updates**.
+- **Kanzurrizk M R A** (IT22166524) – Contributed on **OAuth authentication** and **AI Insight**.
+- **Kajanthan K** (IT22197214) – Worked on **REST API for skill-sharing** and **post feed**.
+- **Peiris M D T N** (IT22109408) – Worked on **plan-sharing** and **frontend development**.
+- **Ashwin V** (IT22204448) – Contributed to **user profile** and **progress updates**.
 
 ## **References** 🌐
 - [What is an API?](https://www.wallarm.com/what/the-concept-of-an-api-gateway)
