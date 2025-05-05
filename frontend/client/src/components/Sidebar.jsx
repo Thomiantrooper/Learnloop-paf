@@ -8,6 +8,7 @@ const Sidebar = ({ handleLogout }) => {
   const handleLogoutClick = () => {
     handleLogout(); // Call the logout function passed from the parent component
     localStorage.removeItem('token'); // Remove token from local storage
+    localStorage.removeItem('userID');
     navigate('/login'); // Redirect to the login page
   };
 
