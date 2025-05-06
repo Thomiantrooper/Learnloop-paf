@@ -1,7 +1,10 @@
+
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { fetchGeminiInsight } from "../utils/fetchGeminiInsight";
+
 
 const SkillInsightsPage = () => {
   const [insights, setInsights] = useState([]);
@@ -9,16 +12,63 @@ const SkillInsightsPage = () => {
   const [emailAddress, setEmailAddress] = useState("");
   const userId = localStorage.getItem("userId");
 
+  const fetchOpenAIInsight = async (promptText) => {
+    const OPENAI_API_KEY = "sk-proj-89\_3iHw0EOGCe-7FNXvekeO5p4X-X645lnZljjkgZ1yBNmKq1RbAilXyglNm1E1sCnWR3hNJt6T3BlbkFJ6Jxj2\_JjKJsxX6FEJWumibbhbdFKZP4OVS8REXnXb\_2cQallUhl6RNsqsDynwCgPilrWVNrZcA"; // Replace with your actual key or secure it in .env
+    const url = "https://api.openai.com/v1/chat/completions";
+
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${OPENAI_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "gpt-3.5-turbo",
+          messages: [
+            {
+              role: "system",
+              content: "You are a helpful AI assistant that provides motivational and insightful feedback on learning activities."
+            },
+            {
+              role: "user",
+              content: promptText
+            }
+          ]
+        })
+      });
+
+      const data = await res.json();
+      return (
+        data?.choices?.[0]?.message?.content || "⚠️ No AI insight returned from OpenAI."
+      );
+    } catch (error) {
+      console.error("OpenAI fetch error:", error);
+      return "❌ Failed to fetch AI insight.";
+    }
+  };
+
   useEffect(() => {
     const fetchInsights = async () => {
       try {
         const res = await axios.get(`http://localhost:8080/api/progress-updates/user/${userId}`);
-        const completedInsights = res.data.filter(update => update.type === "Completed Tutorial" || update.type === "New Skill Learned");
-        setInsights(completedInsights);
+        const completedInsights = res.data.filter(update =>
+          update.type === "Completed Tutorial" || update.type === "New Skill Learned"
+        );
+
+        for (const insight of completedInsights) {
+          if (!insight.aiInsight) {
+            const prompt = `${insight.title}\n\n${insight.description || ""}`;
+            insight.aiInsight = await fetchOpenAIInsight(prompt);
+          }
+        }
+
+        setInsights([...completedInsights]);
       } catch (error) {
         console.error("Error fetching skill insights:", error);
       }
     };
+
     fetchInsights();
   }, [userId]);
 
@@ -94,7 +144,6 @@ const SkillInsightsPage = () => {
         ))}
       </div>
 
-      {/* Email Modal */}
       {emailModal.open && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md space-y-4">
