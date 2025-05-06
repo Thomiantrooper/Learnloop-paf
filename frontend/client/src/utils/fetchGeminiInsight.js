@@ -1,21 +1,32 @@
-export async function fetchGeminiInsight(promptText) {
+export const fetchGeminiInsight = async (prompt) => {
   try {
-    const response = await fetch('http://localhost:8080/api/gemini/insight', {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ prompt: promptText }),
-    });
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyCgbIL3dMT4Yj1uu0w7MyfPbuxjgh1Dy4w`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [{ text: prompt }],
+            },
+          ],
+        }),
+      }
+    );
+
+    const data = await response.json();
 
     if (!response.ok) {
-      throw new Error("Failed to fetch AI insight");
+      console.error("Gemini API Error:", data);
+      throw new Error(data?.error?.message || "Gemini API failed");
     }
 
-    const data = await response.text();
-    return data;
-  } catch (error) {
-    console.error(error);
-    return "Error fetching insight.";
+    return data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  } catch (err) {
+    console.error("❌ Error in fetchGeminiInsight:", err);
+    throw err;
   }
-}
+};
