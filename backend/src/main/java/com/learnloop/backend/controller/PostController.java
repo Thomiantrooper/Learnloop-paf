@@ -4,13 +4,18 @@ import com.learnloop.backend.dto.PostWithUserDTO;
 import com.learnloop.backend.dto.UpdateCommentRequest;
 import com.learnloop.backend.dto.CommentDTO;
 import com.learnloop.backend.dto.CommentRequest;
+import com.learnloop.backend.dto.LikeDTO;
 import com.learnloop.backend.model.Post;
 import com.learnloop.backend.model.Post.Comment;
 import com.learnloop.backend.model.User;
 import com.learnloop.backend.repository.PostRepository;
 import com.learnloop.backend.repository.UserRepository;
 import com.learnloop.backend.service.FileStorageService;
+
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -121,22 +126,43 @@ public class PostController {
     }
 
     @PostMapping("/{postId}/like")
-    public ResponseEntity<?> likePost(@PathVariable String postId, @RequestParam String userId) {
-        Post post = postRepository.findById(postId).orElse(null);
-        if (post == null) {
-            return ResponseEntity.status(404).body("Post not found.");
-        }
-        List<String> likes = post.getLikes();
-        if (likes == null) {
-            likes = new ArrayList<>();
-        }
-        if (!likes.contains(userId)) {
-            likes.add(userId);
-            post.setLikes(likes);
-            postRepository.save(post);
-        }
-        return ResponseEntity.ok(convertToDTO(post));
+public ResponseEntity<?> toggleLike(@PathVariable String postId, @RequestBody LikeDTO likeDTO) {
+    Optional<Post> postOpt = postRepository.findById(postId);
+    if (postOpt.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Post not found");
+
+    Post post = postOpt.get();
+    String userId = likeDTO.getUserId();
+
+    List<String> likes = post.getLikes();
+    if (likes.contains(userId)) {
+        likes.remove(userId);  // Unlike
+    } else {
+        likes.add(userId);     // Like
     }
+
+    post.setLikes(likes);
+    postRepository.save(post);
+
+    return ResponseEntity.ok(post);
+}
+
+    // @PostMapping("/{postId}/like")
+    // public ResponseEntity<?> likePost(@PathVariable String postId, @RequestParam String userId) {
+    //     Post post = postRepository.findById(postId).orElse(null);
+    //     if (post == null) {
+    //         return ResponseEntity.status(404).body("Post not found.");
+    //     }
+    //     List<String> likes = post.getLikes();
+    //     if (likes == null) {
+    //         likes = new ArrayList<>();
+    //     }
+    //     if (!likes.contains(userId)) {
+    //         likes.add(userId);
+    //         post.setLikes(likes);
+    //         postRepository.save(post);
+    //     }
+    //     return ResponseEntity.ok(convertToDTO(post));
+    // }
 
     // @PostMapping("/{postId}/comment")
     // public ResponseEntity<?> addComment(

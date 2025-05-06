@@ -51,6 +51,10 @@ public class SecurityConfig {
                     "/api/progress-updates/**",
                     "/api/plan-sharing/**",
                     "/api/gemini/insight",
+                    "/api/user-notifications/**", 
+                    "/api/notification-history/**",
+                    "/api/gemini/insight",
+                    "/api/gemini",
                      "/ws/**"
                 ).permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/posts/*/comment").authenticated()
