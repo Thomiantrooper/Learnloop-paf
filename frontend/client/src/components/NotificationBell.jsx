@@ -7,19 +7,10 @@ dayjs.extend(relativeTime);
 
 // Custom SVG Icons
 const BellIcon = ({ hasUnread }) => (
-  <svg 
-    width="24" 
-    height="24" 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke={hasUnread ? "#3b82f6" : "#6b7280"} 
-    strokeWidth="2"
-  >
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={hasUnread ? "#3b82f6" : "#6b7280"} strokeWidth="2">
     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
     <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-    {hasUnread && (
-      <circle cx="18" cy="8" r="3" fill="#ef4444" stroke="none" />
-    )}
+    {hasUnread && <circle cx="18" cy="8" r="3" fill="#ef4444" stroke="none" />}
   </svg>
 );
 
@@ -47,14 +38,9 @@ const NotificationBell = ({ userId }) => {
   const fetchNotifications = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await axios.get(
-        `http://localhost:8080/api/user-notifications/${userId}`
-      );
+      const res = await axios.get(`http://localhost:8080/api/user-notifications/${userId}`);
       setNotifications(res.data || []);
-      
-      // Check if there are new notifications since last fetch
-      const hasUnread = res.data.some(n => !n.read);
-      setHasNewNotifications(hasUnread);
+      setHasNewNotifications(res.data.some(n => !n.read));
     } catch (err) {
       console.error("Error fetching notifications:", err);
     } finally {
@@ -62,7 +48,6 @@ const NotificationBell = ({ userId }) => {
     }
   }, [userId]);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -76,15 +61,11 @@ const NotificationBell = ({ userId }) => {
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   useEffect(() => {
     fetchNotifications();
-    
-    // Set up polling for new notifications every 30 seconds
     const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
   }, [fetchNotifications]);
@@ -109,15 +90,6 @@ const NotificationBell = ({ userId }) => {
     }
   };
 
-  const handleToggleDropdown = async () => {
-    const nextState = !showDropdown;
-    setShowDropdown(nextState);
-
-    if (nextState && hasNewNotifications) {
-      await markAllAsRead();
-    }
-  };
-
   const clearAllNotifications = async () => {
     try {
       await axios.delete(`http://localhost:8080/api/user-notifications/clear-all`, {
@@ -129,9 +101,16 @@ const NotificationBell = ({ userId }) => {
     }
   };
 
+  const handleToggleDropdown = async () => {
+    const nextState = !showDropdown;
+    setShowDropdown(nextState);
+    if (nextState && hasNewNotifications) {
+      await markAllAsRead();
+    }
+  };
+
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  // Group notifications by type
   const grouped = notifications
     .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
     .slice(0, 15)
@@ -157,7 +136,6 @@ const NotificationBell = ({ userId }) => {
       mention: { emoji: "📌", color: "from-amber-100 to-yellow-100" },
       default: { emoji: "ℹ️", color: "from-gray-100 to-gray-200" }
     };
-    
     return icons[type] || icons.default;
   };
 
@@ -166,7 +144,7 @@ const NotificationBell = ({ userId }) => {
       <button
         ref={bellRef}
         onClick={handleToggleDropdown}
-        className="relative p-2 rounded-full hover:bg-gray-100 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+        className="relative p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
         title="Notifications"
         aria-label="Notifications"
         aria-expanded={showDropdown}
@@ -193,24 +171,22 @@ const NotificationBell = ({ userId }) => {
             transition={{ type: "spring", damping: 20, stiffness: 300 }}
             className="absolute right-0 mt-2 w-80 md:w-96 bg-white shadow-xl rounded-lg z-50 max-h-[32rem] overflow-y-auto border border-gray-200"
           >
-            <div className="sticky top-0 bg-white z-10 p-4 border-b flex justify-between items-center backdrop-blur-sm bg-white/90">
+            <div className="sticky top-0 bg-white z-10 p-4 border-b flex justify-between items-center">
               <h3 className="font-bold text-lg text-gray-800">Notifications</h3>
               <div className="flex space-x-2">
                 <button
                   onClick={markAllAsRead}
                   disabled={unreadCount === 0}
-                  className="p-1.5 rounded-md hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="p-1.5 rounded-md hover:bg-gray-100 disabled:opacity-40"
                   title="Mark all as read"
-                  aria-label="Mark all notifications as read"
                 >
                   <CheckIcon />
                 </button>
                 <button
                   onClick={clearAllNotifications}
                   disabled={notifications.length === 0}
-                  className="p-1.5 rounded-md hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="p-1.5 rounded-md hover:bg-gray-100 disabled:opacity-40"
                   title="Clear all"
-                  aria-label="Clear all notifications"
                 >
                   <XIcon />
                 </button>

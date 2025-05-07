@@ -2,6 +2,9 @@ package com.learnloop.backend.model;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -88,6 +91,10 @@ public class PlanSharing {
     public boolean isFavorite() {
         return isFavorite;
     }
+
+    @JsonProperty("isFavorite") 
+    public boolean getIsFavorite() { return isFavorite; }
+
 
     public void setFavorite(boolean favorite) {
         isFavorite = favorite;
