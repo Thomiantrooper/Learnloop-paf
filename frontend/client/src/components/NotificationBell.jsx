@@ -1,37 +1,3 @@
-<<<<<<< HEAD
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
-dayjs.extend(relativeTime);
-
-const NotificationBell = ({ userId }) => {
-  const [notifications, setNotifications] = useState([]);
-  const [showDropdown, setShowDropdown] = useState(false);
-
-  const fetchNotifications = async () => {
-    try {
-      const res = await axios.get(`http://localhost:8080/api/user-notifications/${userId}`);
-      setNotifications(res.data || []);
-    } catch (err) {
-      console.error("Error fetching notifications:", err);
-    }
-  };
-
-  useEffect(() => {
-    fetchNotifications();
-  }, [userId]);
-
-  const markAllAsRead = async () => {
-    const unreadIds = notifications.filter((n) => !n.read).map((n) => n.id);
-    for (const id of unreadIds) {
-      await axios.post(`http://localhost:8080/api/user-notifications/mark-read`, {
-        userId,
-        notificationId: id,
-      });
-    }
-    await fetchNotifications(); // Refresh after marking as read
-=======
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import dayjs from "dayjs";
@@ -41,19 +7,10 @@ dayjs.extend(relativeTime);
 
 // Custom SVG Icons
 const BellIcon = ({ hasUnread }) => (
-  <svg 
-    width="24" 
-    height="24" 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke={hasUnread ? "#3b82f6" : "#6b7280"} 
-    strokeWidth="2"
-  >
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={hasUnread ? "#3b82f6" : "#6b7280"} strokeWidth="2">
     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
     <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-    {hasUnread && (
-      <circle cx="18" cy="8" r="3" fill="#ef4444" stroke="none" />
-    )}
+    {hasUnread && <circle cx="18" cy="8" r="3" fill="#ef4444" stroke="none" />}
   </svg>
 );
 
@@ -81,14 +38,9 @@ const NotificationBell = ({ userId }) => {
   const fetchNotifications = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await axios.get(
-        `http://localhost:8080/api/user-notifications/${userId}`
-      );
+      const res = await axios.get(`http://localhost:8080/api/user-notifications/${userId}`);
       setNotifications(res.data || []);
-      
-      // Check if there are new notifications since last fetch
-      const hasUnread = res.data.some(n => !n.read);
-      setHasNewNotifications(hasUnread);
+      setHasNewNotifications(res.data.some(n => !n.read));
     } catch (err) {
       console.error("Error fetching notifications:", err);
     } finally {
@@ -96,7 +48,6 @@ const NotificationBell = ({ userId }) => {
     }
   }, [userId]);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -110,15 +61,11 @@ const NotificationBell = ({ userId }) => {
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   useEffect(() => {
     fetchNotifications();
-    
-    // Set up polling for new notifications every 30 seconds
     const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
   }, [fetchNotifications]);
@@ -141,31 +88,8 @@ const NotificationBell = ({ userId }) => {
     } catch (err) {
       console.error("Error marking notifications as read:", err);
     }
->>>>>>> master
   };
 
-  const handleToggleDropdown = async () => {
-    const nextState = !showDropdown;
-    setShowDropdown(nextState);
-
-<<<<<<< HEAD
-    if (!nextState) {
-      // If closing the dropdown, mark all visible notifications as read
-=======
-    if (nextState && hasNewNotifications) {
->>>>>>> master
-      await markAllAsRead();
-    }
-  };
-
-<<<<<<< HEAD
-  const unreadCount = notifications.filter((n) => !n.read).length;
-
-  // Group notifications by type (likes, comments, follows)
-  const grouped = notifications
-    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-    .slice(0, 10)
-=======
   const clearAllNotifications = async () => {
     try {
       await axios.delete(`http://localhost:8080/api/user-notifications/clear-all`, {
@@ -177,13 +101,19 @@ const NotificationBell = ({ userId }) => {
     }
   };
 
+  const handleToggleDropdown = async () => {
+    const nextState = !showDropdown;
+    setShowDropdown(nextState);
+    if (nextState && hasNewNotifications) {
+      await markAllAsRead();
+    }
+  };
+
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  // Group notifications by type
   const grouped = notifications
     .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
     .slice(0, 15)
->>>>>>> master
     .reduce((acc, n) => {
       acc[n.type] = acc[n.type] || [];
       acc[n.type].push(n);
@@ -193,9 +123,6 @@ const NotificationBell = ({ userId }) => {
   const sectionTitle = {
     like: "Likes",
     comment: "Comments",
-<<<<<<< HEAD
-    follow: "Follows",
-=======
     follow: "New Followers",
     mention: "Mentions",
     system: "System Updates",
@@ -209,68 +136,15 @@ const NotificationBell = ({ userId }) => {
       mention: { emoji: "📌", color: "from-amber-100 to-yellow-100" },
       default: { emoji: "ℹ️", color: "from-gray-100 to-gray-200" }
     };
-    
     return icons[type] || icons.default;
->>>>>>> master
   };
 
   return (
     <div className="relative">
       <button
-<<<<<<< HEAD
-        onClick={handleToggleDropdown}
-        className="relative text-xl"
-        title="Notifications"
-      >
-        🔔
-        {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs px-1.5 py-0.5 rounded-full animate-pulse">
-            {unreadCount}
-          </span>
-        )}
-      </button>
-
-      {showDropdown && (
-        <div className="absolute right-0 mt-2 w-96 bg-white shadow-xl rounded-xl z-50 max-h-[30rem] overflow-y-auto border border-gray-200">
-          <div className="p-4 font-bold border-b text-lg">Notifications</div>
-
-          {Object.keys(grouped).length === 0 ? (
-            <p className="p-4 text-sm text-gray-500">No notifications yet.</p>
-          ) : (
-            Object.entries(grouped).map(([type, items]) => (
-              <div key={type} className="p-2">
-                <h4 className="text-xs uppercase tracking-wide text-gray-400 px-2 mb-1">
-                  {sectionTitle[type]}
-                </h4>
-                {items.map((n) => (
-                  <div
-                    key={n.id}
-                    className="flex items-start gap-3 px-4 py-3 mb-2 rounded-md shadow-sm bg-gray-50 hover:bg-gray-100 transition"
-                  >
-                    <img
-                      src={n.image || `https://i.pravatar.cc/150?u=${n.id}`}
-                      alt="profile"
-                      className="w-10 h-10 rounded-full border border-gray-300"
-                    />
-                    <div className="flex flex-col w-full">
-                      <div className="text-sm">{n.message}</div>
-                      {n.timestamp && (
-                        <div className="text-xs text-gray-500 mt-1">
-                          {dayjs(n.timestamp).fromNow()}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ))
-          )}
-        </div>
-      )}
-=======
         ref={bellRef}
         onClick={handleToggleDropdown}
-        className="relative p-2 rounded-full hover:bg-gray-100 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+        className="relative p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
         title="Notifications"
         aria-label="Notifications"
         aria-expanded={showDropdown}
@@ -297,24 +171,22 @@ const NotificationBell = ({ userId }) => {
             transition={{ type: "spring", damping: 20, stiffness: 300 }}
             className="absolute right-0 mt-2 w-80 md:w-96 bg-white shadow-xl rounded-lg z-50 max-h-[32rem] overflow-y-auto border border-gray-200"
           >
-            <div className="sticky top-0 bg-white z-10 p-4 border-b flex justify-between items-center backdrop-blur-sm bg-white/90">
+            <div className="sticky top-0 bg-white z-10 p-4 border-b flex justify-between items-center">
               <h3 className="font-bold text-lg text-gray-800">Notifications</h3>
               <div className="flex space-x-2">
                 <button
                   onClick={markAllAsRead}
                   disabled={unreadCount === 0}
-                  className="p-1.5 rounded-md hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="p-1.5 rounded-md hover:bg-gray-100 disabled:opacity-40"
                   title="Mark all as read"
-                  aria-label="Mark all notifications as read"
                 >
                   <CheckIcon />
                 </button>
                 <button
                   onClick={clearAllNotifications}
                   disabled={notifications.length === 0}
-                  className="p-1.5 rounded-md hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="p-1.5 rounded-md hover:bg-gray-100 disabled:opacity-40"
                   title="Clear all"
-                  aria-label="Clear all notifications"
                 >
                   <XIcon />
                 </button>
@@ -386,13 +258,8 @@ const NotificationBell = ({ userId }) => {
           </motion.div>
         )}
       </AnimatePresence>
->>>>>>> master
     </div>
   );
 };
 
-<<<<<<< HEAD
 export default NotificationBell;
-=======
-export default NotificationBell;
->>>>>>> master
