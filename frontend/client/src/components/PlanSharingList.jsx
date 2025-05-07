@@ -105,19 +105,19 @@ function PlanSharingList({ updates, onEdit, onDelete, onToggleFavorite }) {
 
           {/* Filter Tabs */}
           <div className="flex flex-wrap items-center gap-3 mt-6">
-            <button
+            {/* <button
               onClick={() => setActiveTab("all")}
               className={`px-4 py-2 rounded-lg transition-all duration-300 ${activeTab === "all" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
             >
               All Plans
-            </button>
-            <button
+            </button> */}
+            {/* <button
               onClick={() => setActiveTab("favorites")}
               className={`px-4 py-2 rounded-lg transition-all duration-300 flex items-center gap-2 ${activeTab === "favorites" ? "bg-amber-500 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
             >
               <FaStar className={activeTab === "favorites" ? "text-white" : "text-amber-400"} />
               Favorites
-            </button>
+            </button> */}
             
             <div className="ml-auto">
               <select

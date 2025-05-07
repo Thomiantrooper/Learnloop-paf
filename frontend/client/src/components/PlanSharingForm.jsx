@@ -15,12 +15,14 @@ function PlanSharingForm({ editingUpdate, onUpdate, setEditingUpdate, closeModal
       setTitle(editingUpdate.title);
       setTopics(editingUpdate.topics || []);
       setDescription(editingUpdate.description);
-      setResources(editingUpdate.resources || [""]); // Initialize with at least one empty resource
-      setTimelineStart(editingUpdate.timelineStart || "");
-      setTimelineEnd(editingUpdate.timelineEnd || "");
-      setIsFavorite(editingUpdate.isFavorite || false); // Initialize isFavorite
+      setResources(editingUpdate.resources?.length ? editingUpdate.resources : [""]);
+      setTimelineStart(editingUpdate.timelineStart ? editingUpdate.timelineStart.substring(0, 10) : "");
+      setTimelineEnd(editingUpdate.timelineEnd ? editingUpdate.timelineEnd.substring(0, 10) : "");
+  
+      setIsFavorite(editingUpdate.isFavorite || false);
     }
   }, [editingUpdate]);
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -186,7 +188,7 @@ function PlanSharingForm({ editingUpdate, onUpdate, setEditingUpdate, closeModal
         </div>
 
         {/* Favorite Checkbox */}
-        <div className="flex items-center">
+        {/* <div className="flex items-center">
           <input
             type="checkbox"
             id="isFavorite"
@@ -197,7 +199,7 @@ function PlanSharingForm({ editingUpdate, onUpdate, setEditingUpdate, closeModal
           <label htmlFor="isFavorite" className="ml-2 text-sm font-medium text-gray-700">
             Mark as Favorite
           </label>
-        </div>
+        </div> */}
 
         {/* Submit Button */}
         <button

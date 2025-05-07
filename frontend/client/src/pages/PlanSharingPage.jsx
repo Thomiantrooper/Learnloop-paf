@@ -94,19 +94,23 @@ function PlanSharingPage() {
         <div className="max-w-7xl mx-auto space-y-8">
           {/* Header */}
           <div className="flex justify-between items-center">
-            <h1 className="text-4xl font-bold text-gray-800">Code Learning Plan</h1>
+            <h1 className="text-4xl font-bold text-gray-800">Learning Plan</h1>
           </div>
 
-          {/* Add Update Button */}
-          <button
-            onClick={() => {
-              setEditingUpdate(null);
-              setShowFormModal(true);
-            }}
-            className="fixed bottom-8 right-8 p-4 bg-green-500 text-white rounded-full hover:bg-green-600 transition duration-300 shadow-lg"
-          >
-            <FaPlus className="w-6 h-6" />
-          </button>
+          {/* Floating + Button (Top-Right) */}
+{/* Floating + Button (Bottom-Right & Blue) */}
+<button
+  onClick={() => {
+    setEditingUpdate(null);
+    setShowFormModal(true);
+  }}
+  className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-3xl flex items-center justify-center shadow-lg transition-all duration-300"
+  title="Create New Plan"
+>
+  <FaPlus />
+</button>
+
+
 
           {/* Form Modal */}
           {showFormModal && (
