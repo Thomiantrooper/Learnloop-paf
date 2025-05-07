@@ -211,6 +211,15 @@ public ResponseEntity<?> unfollowUser(@PathVariable String userId, @RequestParam
         return ResponseEntity.ok("Bio deleted successfully.");
     }
 
+    @GetMapping("/public/username/{username}")
+public ResponseEntity<?> getPublicProfileByUsername(@PathVariable String username) {
+    return userRepository.findByUsername(username)
+        .map(ResponseEntity::ok)
+        .orElse(ResponseEntity.status(404).<User>build());
+}
+
+
+
     @PostMapping("/{userId}/remove-follower")
 public ResponseEntity<?> removeFollower(
     @PathVariable String userId,

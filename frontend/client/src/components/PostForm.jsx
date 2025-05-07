@@ -154,47 +154,65 @@ const PostForm = ({ userId, onPostCreated, onClose, isLarge = false }) => {
     setMediaQueue(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!description.trim() && mediaQueue.length === 0) {
-      setError("Please add text or media to your post");
-      return;
+ // In PostForm component, update the handleSubmit function:
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  console.log('Form submitted');
+
+  if (!description.trim() && mediaQueue.length === 0) {
+    setError("Please add text or media to your post");
+    return;
+  }
+
+  setIsSubmitting(true);
+  setError("");
+
+  const formData = new FormData();
+  formData.append("description", description);
+  formData.append("userId", userId);
+
+  for (let i = 0; i < mediaQueue.length; i++) {
+    const item = mediaQueue[i];
+    formData.append("media", item.file);
+
+    if (item.type === "video" && item.file.trimInfo) {
+      formData.append("trimStart", item.file.trimInfo.start);
+      formData.append("trimEnd", item.file.trimInfo.end);
+    }
+  }
+
+  try {
+    const token = localStorage.getItem("token");
+    
+    // Temporarily disconnect WebSocket during the post creation
+    if (window.stompClient && window.stompClient.connected) {
+      window.stompClient.disconnect();
     }
 
-    setIsSubmitting(true);
-    setError("");
-
-    const formData = new FormData();
-    formData.append("description", description);
-    formData.append("userId", userId);
-    
-    mediaQueue.forEach((item) => {
-      formData.append("media", item.file);
-      if (item.type === "video" && item.file.trimInfo) {
-        formData.append(`trimStart`, item.file.trimInfo.start);
-        formData.append(`trimEnd`, item.file.trimInfo.end);
-      }
+    const res = await axios.post("http://localhost:8080/api/posts", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        Authorization: `Bearer ${token}`,
+      },
     });
 
-    try {
-      const token = localStorage.getItem("token");
-      const res = await axios.post("http://localhost:8080/api/posts", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      onPostCreated(res.data);
-      setDescription("");
-      setMediaQueue([]);
-      if (onClose) onClose();
-    } catch (err) {
-      console.error("Upload failed:", err);
-      setError(err.response?.data?.message || "Upload failed. Please try again.");
-    } finally {
-      setIsSubmitting(false);
+    // Reconnect WebSocket after successful post
+    if (window.connectWebSocket && userId) {
+      window.connectWebSocket(userId, /* your callback function */);
     }
-  };
+
+    onPostCreated(res.data);
+    setDescription("");
+    setMediaQueue([]);
+    if (onClose) onClose();
+  } catch (err) {
+    console.error("Upload failed:", err);
+    setError(err.response?.data?.message || "Upload failed. Please try again.");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+  
 
   const triggerFileInput = () => {
     fileInputRef.current.click();
