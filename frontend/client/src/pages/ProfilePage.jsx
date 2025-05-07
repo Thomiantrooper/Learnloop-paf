@@ -10,6 +10,31 @@ import CommentSection from "../components/CommentSection";
 import FollowersModal from "../components/FollowersModal";
 import { connectWebSocket, disconnectWebSocket } from "../services/WebSocketService";
 import { motion, AnimatePresence } from "framer-motion";
+import Slider from "react-slick";
+
+
+const NextArrow = ({ onClick }) => (
+  <div
+    className="absolute top-1/2 right-2 transform -translate-y-1/2 z-10 cursor-pointer bg-white rounded-full shadow p-2 hover:bg-indigo-100"
+    onClick={onClick}
+  >
+    <svg className="h-5 w-5 text-indigo-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+    </svg>
+  </div>
+);
+
+const PrevArrow = ({ onClick }) => (
+  <div
+    className="absolute top-1/2 left-2 transform -translate-y-1/2 z-10 cursor-pointer bg-white rounded-full shadow p-2 hover:bg-indigo-100"
+    onClick={onClick}
+  >
+    <svg className="h-5 w-5 text-indigo-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+    </svg>
+  </div>
+);
+
 
 const ProfilePage = () => {
   const { userId } = useParams();
@@ -123,13 +148,16 @@ const ProfilePage = () => {
   };
 
   const handleUpdateSubmit = async (postId) => {
+    const formData = new FormData();
+    formData.append("description", newDescription);
+    formData.append("userId", loggedInUserId);
     try {
-      const response = await axios.put(
-        `http://localhost:8080/api/posts/${postId}`,
-        { description: newDescription, userId: loggedInUserId }
-      );
-      setPosts(posts.map(p => p.id === postId ? response.data : p));
+      const response = await axios.put(`http://localhost:8080/api/posts/${postId}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setPosts(posts.map((p) => (p.id === postId ? response.data : p)));
       setEditingPostId(null);
+      setNewDescription("");
     } catch (err) {
       console.error("Error updating post:", err);
     }
@@ -272,19 +300,33 @@ const ProfilePage = () => {
                   <p className="text-gray-700 mb-4 whitespace-pre-line">{post.description}</p>
                 )}
 
-                {post.mediaUrls && post.mediaUrls.map((url, index) =>
-                  url.endsWith(".mp4") ? (
-                    <div key={index} className="rounded-xl overflow-hidden mb-4 shadow-md">
-                      <video controls className="w-full">
-                        <source src={url} type="video/mp4" />
-                      </video>
-                    </div>
-                  ) : (
-                    <div key={index} className="rounded-xl overflow-hidden mb-4 shadow-md">
-                      <img src={url} alt="Media" className="w-full object-cover max-h-96" />
-                    </div>
-                  )
-                )}
+                  <Slider
+                    dots={true}
+                    infinite={false}
+                    arrows={true}
+                    nextArrow={<NextArrow />}
+                    prevArrow={<PrevArrow />}
+                    className="relative mb-4 rounded-xl overflow-hidden border border-gray-100"
+                  >
+                    {post.mediaUrls.map((url, index) =>
+                      url.endsWith(".mp4") ? (
+                        <div key={index}>
+                          <video controls className="w-full max-h-96 object-cover bg-black">
+                            <source src={url} type="video/mp4" />
+                          </video>
+                        </div>
+                      ) : (
+                        <div key={index}>
+                          <img
+                            src={url}
+                            alt={`media-${index}`}
+                            className="w-full max-h-96 object-cover"
+                          />
+                        </div>
+                      )
+                    )}
+                  </Slider>
+
 
                 <div className="flex items-center justify-between border-t border-gray-100 pt-4">
                   <motion.button

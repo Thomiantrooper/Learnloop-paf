@@ -1,39 +1,34 @@
 // src/services/WebSocketService.js
 import SockJS from "sockjs-client";
-import { Client } from "@stomp/stompjs";
+import { CompatClient, Stomp } from "@stomp/stompjs";
 
 let stompClient = null;
+let isConnected = false;
 
-export const connectWebSocket = (userId, onMessageReceived) => {
-  const socket = new SockJS("http://localhost:8080/ws");
+export const connectWebSocket = (userId, callback) => {
+  if (isConnected) return;
 
-  stompClient = new Client({
-    webSocketFactory: () => socket,
-    reconnectDelay: 5000,
-    debug: (str) => {
-      console.log(str);
-    },
-  });
+  const socket = new SockJS('http://localhost:8080/ws');
+  stompClient = Stomp.over(socket); // This works with the Compat version
 
-  stompClient.onConnect = () => {
-    console.log("Connected to WebSocket");
+  stompClient.connect({}, () => {
+    isConnected = true;
+    console.log("WebSocket Connected");
     stompClient.subscribe(`/topic/profile-update/${userId}`, (message) => {
       const update = JSON.parse(message.body);
-      onMessageReceived(update);
+      callback(update);
     });
-  };
-
-
-  stompClient.onStompError = (frame) => {
-    console.error("WebSocket error:", frame);
-  };
-
-  stompClient.activate();
+  }, (error) => {
+    console.error("WebSocket Error:", error);
+    isConnected = false;
+  });
 };
 
 export const disconnectWebSocket = () => {
-  if (stompClient) {
-    stompClient.deactivate();
-    console.log("Disconnected from WebSocket");
+  if (stompClient && isConnected) {
+    stompClient.disconnect(() => {
+      console.log("WebSocket Disconnected");
+      isConnected = false;
+    });
   }
 };

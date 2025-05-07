@@ -57,6 +57,7 @@ public class SecurityConfig {
                     "/api/gemini",
                      "/ws/**"
                 ).permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/posts").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/posts/*/comment").authenticated()
                 .anyRequest().authenticated()
             )

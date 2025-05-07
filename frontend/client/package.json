@@ -22,7 +22,7 @@
     "draftjs-to-html": "^0.9.1",
     "easymde": "^2.20.0",
     "emoji-picker-react": "^4.12.2",
-    "framer-motion": "^12.9.7",
+    "framer-motion": "^12.10.1",
     "html2canvas": "^1.4.1",
     "html2pdf.js": "^0.10.3",
     "jspdf": "^3.0.1",

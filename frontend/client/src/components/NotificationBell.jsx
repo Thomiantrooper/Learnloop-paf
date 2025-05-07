@@ -5,7 +5,6 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import { motion, AnimatePresence } from "framer-motion";
 dayjs.extend(relativeTime);
 
-// Custom SVG Icons
 const BellIcon = ({ hasUnread }) => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={hasUnread ? "#3b82f6" : "#6b7280"} strokeWidth="2">
     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -32,10 +31,13 @@ const NotificationBell = ({ userId }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hasNewNotifications, setHasNewNotifications] = useState(false);
+  const [justReadIds, setJustReadIds] = useState(new Set());
+  const lastReadTimeRef = useRef(null);
   const dropdownRef = useRef(null);
   const bellRef = useRef(null);
 
   const fetchNotifications = useCallback(async () => {
+    if (lastReadTimeRef.current && Date.now() - lastReadTimeRef.current < 5000) return;
     setIsLoading(true);
     try {
       const res = await axios.get(`http://localhost:8080/api/user-notifications/${userId}`);
@@ -49,7 +51,7 @@ const NotificationBell = ({ userId }) => {
   }, [userId]);
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    document.addEventListener("mousedown", (event) => {
       if (
         dropdownRef.current &&
         !dropdownRef.current.contains(event.target) &&
@@ -58,60 +60,51 @@ const NotificationBell = ({ userId }) => {
       ) {
         setShowDropdown(false);
       }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    });
   }, []);
 
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30000);
+    const interval = setInterval(fetchNotifications, 10000);
     return () => clearInterval(interval);
   }, [fetchNotifications]);
-
-  const markAllAsRead = async () => {
-    const unreadIds = notifications.filter((n) => !n.read).map((n) => n.id);
-    if (unreadIds.length === 0) return;
-
-    try {
-      await Promise.all(
-        unreadIds.map((id) =>
-          axios.post(`http://localhost:8080/api/user-notifications/mark-read`, {
-            userId,
-            notificationId: id,
-          })
-        )
-      );
-      await fetchNotifications();
-      setHasNewNotifications(false);
-    } catch (err) {
-      console.error("Error marking notifications as read:", err);
-    }
-  };
-
-  const clearAllNotifications = async () => {
-    try {
-      await axios.delete(`http://localhost:8080/api/user-notifications/clear-all`, {
-        data: { userId }
-      });
-      setNotifications([]);
-    } catch (err) {
-      console.error("Error clearing notifications:", err);
-    }
-  };
 
   const handleToggleDropdown = async () => {
     const nextState = !showDropdown;
     setShowDropdown(nextState);
+
     if (nextState && hasNewNotifications) {
-      await markAllAsRead();
+      const unread = notifications.filter(n => !n.read);
+      const ids = unread.map(n => n.id);
+
+      try {
+        await Promise.all(
+          ids.map(id =>
+            axios.post(`http://localhost:8080/api/user-notifications/mark-read`, {
+              userId,
+              notificationId: id,
+            })
+          )
+        );
+
+        lastReadTimeRef.current = Date.now();
+        setJustReadIds(new Set(ids));
+        setHasNewNotifications(false);
+
+        setTimeout(() => {
+          setJustReadIds(new Set());
+        }, 5000);
+
+      } catch (err) {
+        console.error("Error marking notifications as read:", err);
+      }
     }
   };
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   const grouped = notifications
+    .filter(n => !justReadIds.has(n.id))
     .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
     .slice(0, 15)
     .reduce((acc, n) => {
@@ -175,7 +168,7 @@ const NotificationBell = ({ userId }) => {
               <h3 className="font-bold text-lg text-gray-800">Notifications</h3>
               <div className="flex space-x-2">
                 <button
-                  onClick={markAllAsRead}
+                  onClick={() => {}}
                   disabled={unreadCount === 0}
                   className="p-1.5 rounded-md hover:bg-gray-100 disabled:opacity-40"
                   title="Mark all as read"
@@ -183,7 +176,12 @@ const NotificationBell = ({ userId }) => {
                   <CheckIcon />
                 </button>
                 <button
-                  onClick={clearAllNotifications}
+                  onClick={async () => {
+                    await axios.delete(`http://localhost:8080/api/user-notifications/clear-all`, {
+                      data: { userId }
+                    });
+                    setNotifications([]);
+                  }}
                   disabled={notifications.length === 0}
                   className="p-1.5 rounded-md hover:bg-gray-100 disabled:opacity-40"
                   title="Clear all"
@@ -225,10 +223,9 @@ const NotificationBell = ({ userId }) => {
                           key={n.id}
                           initial={{ opacity: 0, x: 10 }}
                           animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -10 }}
                           transition={{ duration: 0.2 }}
-                          className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${
-                            !n.read ? "bg-blue-50/50" : ""
-                          }`}
+                          className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${!n.read ? "bg-blue-50/50" : ""}`}
                         >
                           <div className="flex-shrink-0">
                             <div className={`h-9 w-9 rounded-full bg-gradient-to-br ${icon.color} flex items-center justify-center text-lg`}>
@@ -243,9 +240,7 @@ const NotificationBell = ({ userId }) => {
                               <span className="text-xs text-gray-500">
                                 {dayjs(n.timestamp).fromNow()}
                               </span>
-                              {!n.read && (
-                                <span className="inline-block h-2 w-2 rounded-full bg-blue-500"></span>
-                              )}
+                              {!n.read && <span className="inline-block h-2 w-2 rounded-full bg-blue-500"></span>}
                             </div>
                           </div>
                         </motion.div>
