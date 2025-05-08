@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -19,13 +20,6 @@ const CheckIcon = () => (
   </svg>
 );
 
-const XIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4b5563">
-    <path d="M18 6L6 18" strokeWidth="2" />
-    <path d="M6 6l12 12" strokeWidth="2" />
-  </svg>
-);
-
 const NotificationBell = ({ userId }) => {
   const [notifications, setNotifications] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -35,6 +29,7 @@ const NotificationBell = ({ userId }) => {
   const lastReadTimeRef = useRef(null);
   const dropdownRef = useRef(null);
   const bellRef = useRef(null);
+  const navigate = useNavigate(); // 👈 React Router hook
 
   const fetchNotifications = useCallback(async () => {
     if (lastReadTimeRef.current && Date.now() - lastReadTimeRef.current < 5000) return;
@@ -51,7 +46,7 @@ const NotificationBell = ({ userId }) => {
   }, [userId]);
 
   useEffect(() => {
-    document.addEventListener("mousedown", (event) => {
+    const handleClickOutside = (event) => {
       if (
         dropdownRef.current &&
         !dropdownRef.current.contains(event.target) &&
@@ -59,9 +54,16 @@ const NotificationBell = ({ userId }) => {
         !bellRef.current.contains(event.target)
       ) {
         setShowDropdown(false);
+
+        // 👇 Redirect to previous page OR a specific page
+        navigate("/dashboard"); // Go to previous page
+        // Or use: navigate("/dashboard");
       }
-    });
-  }, []);
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [navigate]);
 
   useEffect(() => {
     fetchNotifications();
@@ -91,9 +93,11 @@ const NotificationBell = ({ userId }) => {
         setJustReadIds(new Set(ids));
         setHasNewNotifications(false);
 
-        setTimeout(() => {
-          setJustReadIds(new Set());
-        }, 5000);
+        setNotifications(prev =>
+          prev.map(n => (ids.includes(n.id) ? { ...n, read: true } : n))
+        );
+
+        setTimeout(() => setJustReadIds(new Set()), 5000);
 
       } catch (err) {
         console.error("Error marking notifications as read:", err);
@@ -104,7 +108,6 @@ const NotificationBell = ({ userId }) => {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const grouped = notifications
-    .filter(n => !justReadIds.has(n.id))
     .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
     .slice(0, 15)
     .reduce((acc, n) => {
@@ -166,29 +169,14 @@ const NotificationBell = ({ userId }) => {
           >
             <div className="sticky top-0 bg-white z-10 p-4 border-b flex justify-between items-center">
               <h3 className="font-bold text-lg text-gray-800">Notifications</h3>
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => {}}
-                  disabled={unreadCount === 0}
-                  className="p-1.5 rounded-md hover:bg-gray-100 disabled:opacity-40"
-                  title="Mark all as read"
-                >
-                  <CheckIcon />
-                </button>
-                <button
-                  onClick={async () => {
-                    await axios.delete(`http://localhost:8080/api/user-notifications/clear-all`, {
-                      data: { userId }
-                    });
-                    setNotifications([]);
-                  }}
-                  disabled={notifications.length === 0}
-                  className="p-1.5 rounded-md hover:bg-gray-100 disabled:opacity-40"
-                  title="Clear all"
-                >
-                  <XIcon />
-                </button>
-              </div>
+              <button
+                onClick={() => {}}
+                disabled={unreadCount === 0}
+                className="p-1.5 rounded-md hover:bg-gray-100 disabled:opacity-40"
+                title="Mark all as read"
+              >
+                <CheckIcon />
+              </button>
             </div>
 
             {isLoading ? (
